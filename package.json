@@ -1,21 +1,30 @@
 {
-  "name": "create-nilgiriperformance",
-  "version": "2.0.4",
-  "description": "CLI tool to create a performance testing project",
+  "name": "nilgiriperformance",
+  "version": "9.9.17",
+  "description": "A simple script to run with npx on the server",
   "main": "index.js",
   "bin": {
-    "nilgiriperformance": "index.js"
+    "nilgiriperformance": "./index.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "npm run build && node index.js"
+  },
+  "author": "bhuvaneshp29 <bhuvanesh.p@triconinfotech.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "typescript": "^5.7.3"
   },
   "dependencies": {
-    "inquirer": "^9.2.6"
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7"
   },
-  "devDependencies": {
-    "typescript": "^5.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhuvaneshp2998/Performance.git"
   },
-  "keywords": ["performance", "k6", "typescript", "project-setup"],
-  "author": "Your Name",
-  "license": "MIT"
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
 }
