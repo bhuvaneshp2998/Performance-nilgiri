@@ -1,0 +1,21 @@
+{
+  "name": "create-nilgiriperformance",
+  "version": "2.0.4",
+  "description": "CLI tool to create a performance testing project",
+  "main": "index.js",
+  "bin": {
+    "nilgiriperformance": "index.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "inquirer": "^9.2.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["performance", "k6", "typescript", "project-setup"],
+  "author": "Your Name",
+  "license": "MIT"
+}

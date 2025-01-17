@@ -1,0 +1,7 @@
+node_modules/
+.env
+/output/
+package-lock.json
+/test-script.js/
+/test-summary.json/
+/test-report.txt/
