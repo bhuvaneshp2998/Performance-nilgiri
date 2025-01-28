@@ -10,7 +10,7 @@
     <a href="https://npmjs.com/package/create-nilgiriperformance">
         <img src="https://img.shields.io/npm/dm/create-nilgiriperformance.svg" alt="npm downloads">
     </a>
-    <a href="https://github.com/animeshkumar29/nilgiri/blob/main/LICENSE.txt">
+    <a href="https://github.com/bhuvaneshp2998/Performance-nilgiri/blob/main/LICENSE.txt">
         <img src="https://img.shields.io/npm/l/create-nilgiriperformance.svg" alt="license">
     </a>
 </p>
