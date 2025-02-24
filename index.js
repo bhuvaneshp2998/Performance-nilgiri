@@ -1,66 +1,57 @@
-
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const axios = require('axios');
 
 /**
- * Runs a k6 performance test dynamically, generates a JSON report, and then creates a custom HTML report based on it.
+ * Runs a k6 performance test, generates a JSON report, and creates a custom HTML report using AI analysis.
  * @param {Object} params - Parameters for the k6 test.
- * @param {string} params.url - URL to test.
- * @param {Object} params.options - k6 options (e.g., vus, duration, stages, thresholds, etc.).
- * @param {string} [params.reportPath] - Path to save the custom HTML report.
- * @param {Object} [params.aireport] - Optional API key and report path for generating reports.
- * @param {string} [params.detailedReportjson] - Path to save the detailed JSON report.
  */
 async function runK6Test(params) {
     const { url, options, aireport, detailedReportjson } = params;
 
-    if (!aireport || !aireport.reportPath) {
-        console.error('Report path is not defined in aireport');
+    if (!aireport || !aireport.reportPath || !aireport.AiUrl || !aireport.apikey) {
+        console.error('Missing required AI report parameters (reportPath, AiUrl, or apikey)');
         return;
     }
 
     const reportPath = aireport.reportPath;
+    const AiUrl = aireport.AiUrl;
     const apiKey = aireport.apikey;
 
     // Convert options object to a string representation
     const optionsString = JSON.stringify(options, null, 4)
         .replace(/"(\w+)":/g, '$1:') // Remove quotes around keys
-        .replace(/"/g, "'"); // Replace double quotes with single quotes for k6 compatibility
+        .replace(/"/g, "'"); // Replace double quotes with single quotes
 
-    // Generate k6 script as a string
-    const k6Script = `import http from 'k6/http';
-import { check, sleep } from 'k6';
+    // Generate k6 script dynamically
+    const k6Script = `
+        import http from 'k6/http';
+        import { check, sleep } from 'k6';
 
-export const options = ${optionsString};
+        export const options = ${optionsString};
 
-export default function () {
-    let res = http.get('${url}');
-    check(res, {
-        'status was 200': (r) => r.status === 200,
-    });
-    sleep(1);
-}
-`.trim();
+        export default function () {
+            let res = http.get('${url}');
+            check(res, {
+                'status was 200': (r) => r.status === 200,
+            });
+            sleep(1);
+        }
+    `.trim();
 
     // Create a temporary script file
     const tempScriptPath = path.join(__dirname, 'temp_k6_script.js');
     fs.writeFileSync(tempScriptPath, k6Script);
 
-    // Prepare the k6 command arguments
-    const k6Args = ['run', tempScriptPath];
+    // Prepare k6 command arguments
+    const jsonReportPath = path.resolve('temp_report.json');
+    const k6Args = ['run', tempScriptPath, '--summary-export', jsonReportPath];
 
-    // Set the report path for JSON
-    let jsonReportPath = path.resolve('temp_report.json');
-    k6Args.push('--summary-export', jsonReportPath);
+    // Run k6 test
+    const result = spawnSync('k6', k6Args, { stdio: 'inherit' });
 
-    // Run k6 with the generated script
-    const result = spawnSync('k6', k6Args, {
-        stdio: 'inherit', // Show output in the terminal
-    });
-
-    // Cleanup: Remove the temporary script file
+    // Cleanup temporary script
     fs.unlinkSync(tempScriptPath);
 
     if (result.error) {
@@ -68,38 +59,35 @@ export default function () {
         return;
     }
 
-    // Read the JSON report
+    // Read k6 JSON report
     const jsonData = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8'));
 
-    // Save detailed JSON report if specified
+    // Save detailed JSON report if needed
     if (detailedReportjson) {
         fs.writeFileSync(detailedReportjson, JSON.stringify(jsonData, null, 2));
         console.log(`Detailed JSON report saved: ${detailedReportjson}`);
     }
 
-    // Call the AI API for analysis
+    // Call AI API for analysis
     try {
-        const aiAnalysis = await getAIAnalysis(jsonData, apiKey);
-
-        // Generate custom HTML report with AI analysis
+        const aiAnalysis = await getAIAnalysis(jsonData, AiUrl, apiKey);
         generateCustomHtmlReport(jsonData, aiAnalysis, reportPath);
     } catch (error) {
         console.error('Error during AI analysis:', error);
     }
 
-    // Clean up the JSON report file
+    // Cleanup JSON report file
     fs.unlinkSync(jsonReportPath);
 }
 
 /**
- * Analyzes the k6 performance data using an AI API (e.g., OpenAI).
+ * Analyzes the k6 performance data using an AI API.
  * @param {Object} jsonData - k6 JSON data.
+ * @param {string} AiUrl - AI API URL.
  * @param {string} apiKey - The API key for the AI service.
- * @returns {string} - The AI analysis result.
+ * @returns {string} - AI analysis result.
  */
-async function getAIAnalysis(jsonData, apiKey) {
-
-    console.log(jsonData)
+async function getAIAnalysis(jsonData, AiUrl, apiKey) {
     const tableRows = Object.keys(jsonData).map(key => {
         const value = jsonData[key];
         let recommendation, fixSuggestion, explanation;
@@ -160,7 +148,7 @@ Analyze this data and provide a comprehensive performance report in a table form
 
 Please format the analysis and suggestions into a structured table with the following columns: **Category**, **Metric**, **Value**, **Recommendation**, **Fix/Suggestion**, **Explanation**.
 
-Output the result in this HTML table format:
+Output the result in this table format:
 
 <table border="1">
   <tr>
@@ -175,38 +163,32 @@ Output the result in this HTML table format:
 </table>
 `;
 
-
-    const url = "https://veda-ai-openaiservice.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2023-03-15-preview";
-
     const aipayload = {
         messages: [
-            { role: 'system', content: "You are expert in k6 perfromce tesing" },
+            { role: 'system', content: "You are an expert in k6 performance testing." },
             { role: 'user', content: prompt },
         ],
         temperature: 0.3,
     };
 
-    const aiheaders = {
-        "Content-Type": "application/json",
-        "api-key": apiKey,
-    };
-
     try {
-        const response = await axios.post(url, aipayload, { headers: aiheaders });
-        return response.data.choices[0].message.content.trim(); // Return the analysis result
+        const response = await axios.post(AiUrl, aipayload, {
+            headers: { "Content-Type": "application/json", "api-key": apiKey },
+        });
+        return response.data.choices[0].message.content.trim();
     } catch (error) {
-        console.error("Error sending request to GPT:", error);
+        console.error("Error sending request to AI API:", error);
         throw error;
     }
 }
 
 /**
- * Generates a custom HTML report based on the k6 JSON summary and AI analysis.
+ * Generates a custom HTML report based on k6 JSON data and AI analysis.
  * @param {Object} jsonData - k6 JSON data.
  * @param {string} aiAnalysis - AI analysis result.
- * @param {string} reportPath - Path to save the custom HTML report.
+ * @param {string} reportPath - Path to save the HTML report.
  */
-function generateCustomHtmlReport(jsonData, aiAnalysis, reportPath) {
+function generateCustomHtmlReport(jsonData, aiAnalysis, reportPath){
     // Extract metrics from jsonData
     const totalRequests = jsonData.metrics?.http_reqs?.count || 'N/A';
     const duration = jsonData.metrics?.http_req_duration?.avg?.toFixed(2) ?? 'N/A';
