@@ -1,7 +1,7 @@
 {
   "name": "performancenilgiri",
-  "version": "0.0.1",
-  "description": "CLI tool to create a performance testing project",
+  "version": "0.0.2",
+  "description": "AI Powered performance tool for performance testing",
   "main": "index.js",
   "bin": {
     "performancenilgiri": "index.js"
@@ -20,8 +20,9 @@
     "performance",
     "k6",
     "typescript",
-    "project-setup"
+    "project-setup",
+    "Tricon"
   ],
-  "author": "Your Name",
+  "author": "Bhuvanesh P",
   "license": "MIT"
 }
