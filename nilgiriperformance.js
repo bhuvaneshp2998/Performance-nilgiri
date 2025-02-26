@@ -56,7 +56,6 @@ const axios = require('axios');
  *   .catch(err => console.error('Error:', err));
  * ```
  */
-
 async function runK6Test(params) {
     const { url, options, aireport, detailedReportjson } = params;
 
