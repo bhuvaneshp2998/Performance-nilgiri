@@ -1,10 +1,10 @@
 {
-  "name": "nilgiri_performance",
+  "name": "performancenilgiri",
   "version": "0.0.0",
   "description": "CLI tool to create a performance testing project",
   "main": "index.js",
   "bin": {
-    "nilgiriperformance": "index.js"
+    "performancenilgiri": "index.js"
   },
   "scripts": {
     "build": "tsc"
