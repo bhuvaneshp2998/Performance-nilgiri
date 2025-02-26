@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/triconinfotech/nilgiri/main/files/nilgiri.PNG" alt="Nilgiri Logo" width="200"/>
+  <img src="https://raw.githubusercontent.com/bhuvaneshp2998/Performance-nilgiri/main/logo/NilgiriPerformance.png" alt="Nilgiri Performacne Logo" width="200"/>
 </p>
 <h1 align="center">Nilgiri Framework</h1>
 <p align="center">
@@ -121,7 +121,7 @@ runK6Test(testConfig)
 <h1 align="center"> 📊 AI-Enhanced Performance Reports</h1>
 
 ## Report Preview
-![Performance Report](https://raw.githubusercontent.com/PreethiGowda11/n_accessibilityAI/main/logo/accessibilityReport.png)
+![Performance Report](https://raw.githubusercontent.com/bhuvaneshp2998/Performance-nilgiri/main/logo/PerformanceReport.png)
 
 ---
 
