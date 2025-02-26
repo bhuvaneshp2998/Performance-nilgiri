@@ -4,9 +4,59 @@ const { spawnSync } = require('child_process');
 const axios = require('axios');
 
 /**
- * Runs a k6 performance test, generates a JSON report, and creates a custom HTML report using AI analysis.
- * @param {Object} params - Parameters for the k6 test.
+ * Executes a K6 performance test dynamically, generates test reports, and integrates AI-based analysis.  
+ * This function allows users to run K6 performance tests with customizable options, save results,  
+ * and analyze performance data using an AI-based service.
+ *
+ * ## **How It Works**
+ * 1. **Validates input parameters**: Ensures required AI report parameters (`reportPath`, `AiUrl`, `apikey`) are provided.
+ * 2. **Executes the K6 test**: Runs the generated script and collects performance metrics.
+ * 3. **Saves performance results**: Stores detailed JSON reports if `detailedReportjson` is specified.
+ * 4. **Performs AI analysis**: Sends test results to an AI service for further insights.
+ * 5. **Generates an AI-based HTML report**: Processes AI analysis and saves a structured report in `reportPath`.
+ *
+ * ---
+ * 📌 **Note:**  
+ * - Ensure that `k6` is installed and available in the system’s environment.  
+ * - The AI analysis service requires a valid API key and endpoint.  
+ * - Temporary script and report files are automatically cleaned up after execution.
+ *
+ * @param {Object} params - Configuration object containing test parameters.
+ * @param {string} params.url - The target URL for the K6 performance test.
+ * @param {Object} params.options - K6 test options defining virtual users (VUs), duration, etc.
+ * @param {Object} params.aireport - Configuration for AI-based analysis.
+ * @param {string} params.aireport.reportPath - File path to save the AI-generated HTML report.
+ * @param {string} params.aireport.AiUrl - AI API endpoint for performance analysis.
+ * @param {string} params.aireport.apikey - API key for authenticating AI-based analysis requests.
+ * @param {string} [params.detailedReportjson] - Optional path to save a detailed JSON performance report.
+ *
+ * @throws {Error} If required AI report parameters (`reportPath`, `AiUrl`, or `apikey`) are missing.
+ * @returns {Promise<void>} Resolves when the test execution and AI analysis are completed.
+ *
+ * @example
+ * ```javascript
+ * import { runK6Test } from 'nilgiriperformance';
+ *
+ * const testConfig = {
+ *   url: "https://example.com",
+ *   options: {
+ *     vus: 10,
+ *     duration: "30s"
+ *   },
+ *   aireport: {
+ *     reportPath: "./ai_performance_report.html",
+ *     AiUrl: "https://ai-analysis-api.com",
+ *     apikey: "your-api-key"
+ *   },
+ *   detailedReportjson: "./performance_metrics.json"
+ * };
+ *
+ * runK6Test(testConfig)
+ *   .then(() => console.log('Performance test completed successfully!'))
+ *   .catch(err => console.error('Error:', err));
+ * ```
  */
+
 async function runK6Test(params) {
     const { url, options, aireport, detailedReportjson } = params;
 
