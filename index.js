@@ -1,3 +1,3 @@
-const { runK6Test } = require('./nilgiriperformance');
+const { runPerformanceTest } = require('./nilgiriperformance');
 
-module.exports = { runK6Test };  // ✅ Export correctly
+module.exports = { runPerformanceTest };  // ✅ Export correctly

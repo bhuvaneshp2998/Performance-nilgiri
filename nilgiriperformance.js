@@ -56,7 +56,7 @@ const axios = require('axios');
  *   .catch(err => console.error('Error:', err));
  * ```
  */
-async function runK6Test(params) {
+async function runPerformanceTest(params) {
     const { url, options, aireport, detailedReportjson } = params;
 
     if (!aireport || !aireport.reportPath || !aireport.AiUrl || !aireport.apikey) {
@@ -716,4 +716,4 @@ const aiAnalysisTable = `
     console.log(`Custom HTML report with AI analysis generated: ${reportPath}`);
 }
 
-module.exports = { runK6Test };
+module.exports = { runPerformanceTest };
