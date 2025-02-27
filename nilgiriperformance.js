@@ -7,7 +7,7 @@ const axios = require('axios');
  * Runs a k6 performance test, generates a JSON report, and creates a custom HTML report using AI analysis.
  * @param {Object} params - Parameters for the k6 test.
  */
-async function runK6Test(params) {
+async function runPerformanceTest(params) {
     const { url, options, aireport, detailedReportjson } = params;
 
     if (!aireport || !aireport.reportPath || !aireport.AiUrl || !aireport.apikey) {
@@ -667,4 +667,4 @@ const aiAnalysisTable = `
     console.log(`Custom HTML report with AI analysis generated: ${reportPath}`);
 }
 
-module.exports = { runK6Test };
+module.exports = { runPerformanceTest };
