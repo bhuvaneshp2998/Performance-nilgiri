@@ -1,6 +1,6 @@
 {
   "name": "performancenilgiri",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CLI tool to create a performance testing project",
   "main": "index.js",
   "bin": {
