@@ -1,6 +1,6 @@
 {
   "name": "performancenilgiri",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CLI tool to create a performance testing project",
   "main": "index.js",
   "bin": {
@@ -10,10 +10,20 @@
     "build": "tsc"
   },
   "dependencies": {
-    "axios": "^1.8.1",
-    "inquirer": "^9.2.6"
+    "axios": "^1.8.2",
+    "fs": "^0.0.1-security",
+    "inquirer": "^9.2.6",
+    "nilgiriperformance": "^9.9.21",
+    "path": "^0.12.7",
+    "performancenilgiri": "^0.0.6",
+    "pixelmatch": "^5.3.0",
+    "playwright": "^1.51.0",
+    "playwright-chromium": "^1.51.0",
+    "pngjs": "^7.0.0",
+    "pngjs2": "^2.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.13.10",
     "typescript": "^5.0.0"
   },
   "keywords": [
@@ -23,5 +33,14 @@
     "project-setup"
   ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhuvaneshp2998/Performance-nilgiri.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bhuvaneshp2998/Performance-nilgiri/issues"
+  },
+  "homepage": "https://github.com/bhuvaneshp2998/Performance-nilgiri#readme"
 }
