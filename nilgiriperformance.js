@@ -21,113 +21,213 @@ const axios = require('axios');
  * - The AI analysis service requires a valid API key and endpoint.  
  * - Temporary script and report files are automatically cleaned up after execution.
  *
- * @param {Object} params - Configuration object containing test parameters.
- * @param {string} params.url - The target URL for the K6 performance test.
- * @param {Object} params.options - K6 test options defining virtual users (VUs), duration, etc.
- * @param {Object} params.aireport - Configuration for AI-based analysis.
- * @param {string} params.aireport.reportPath - File path to save the AI-generated HTML report.
- * @param {string} params.aireport.AiUrl - AI API endpoint for performance analysis.
- * @param {string} params.aireport.apikey - API key for authenticating AI-based analysis requests.
- * @param {string} [params.detailedReportjson] - Optional path to save a detailed JSON performance report.
- *
- * @throws {Error} If required AI report parameters (`reportPath`, `AiUrl`, or `apikey`) are missing.
- * @returns {Promise<void>} Resolves when the test execution and AI analysis are completed.
- *
+ /**
+ * Executes a comprehensive performance test using k6 with optional AI analysis reporting
+ * 
+ * @param {Object} params - Configuration object containing test parameters
+ * @param {Object} params.request - HTTP request configuration
+ * @param {string} params.request.url - Target URL for the performance test
+ * @param {string} [params.request.method='GET'] - HTTP method (GET|POST|PUT|DELETE|PATCH)
+ * @param {Object} [params.request.body] - Request payload as JSON-serializable object
+ * @param {string} [params.request.json] - Raw JSON string payload (alternative to body)
+ * @param {Object} [params.request.formData] - Form data as key-value pairs
+ * @param {Buffer} [params.request.binary] - Binary payload for file uploads
+ * @param {Object} [params.request.headers] - Custom HTTP headers
+ * @param {Object} [params.request.params] - URL query parameters
+ * @param {Object} [params.request.cookies] - HTTP cookies
+ * @param {string} [params.request.timeout] - Request timeout (e.g., '30s')
+ * 
+ * @param {Object} params.options - k6 load test configuration
+ * @param {number} [params.options.vus] - Virtual users count
+ * @param {string} [params.options.duration] - Test duration (e.g., '5m')
+ * @param {Array} [params.options.stages] - Ramping configuration
+ * @param {Object} [params.options.thresholds] - Performance thresholds
+ * 
+ * @param {Object} [params.aireport] - AI reporting configuration (optional)
+ * @param {string} params.aireport.reportPath - Path to save HTML report
+ * @param {string} params.aireport.AiUrl - AI service endpoint URL
+ * @param {string} params.aireport.apikey - API key for AI service
+ * 
+ * @param {string} [params.detailedReportjson] - Path to save detailed JSON report (optional)
+ * @param {string} [params.checks] - Custom k6 check conditions (optional)
+ * @param {number} [params.thinkTime=1] - Delay between requests in seconds (optional)
+ * 
+ * @returns {Promise<Object>} Resolves with test results including metrics
+ * 
  * @example
- * ```javascript
- * import { runK6Test } from 'nilgiriperformance';
- *
- * const testConfig = {
- *   url: "https://example.com",
- *   options: {
- *     vus: 10,
- *     duration: "30s"
+ * // Basic GET test
+ * await runPerformanceTest({
+ *   request: { url: 'https://api.example.com' },
+ *   options: { vus: 10, duration: '1m' }
+ * });
+ * 
+ * @example
+ * // POST with AI reporting
+ * await runPerformanceTest({
+ *   request: {
+ *     method: 'POST',
+ *     url: 'https://api.example.com/login',
+ *     body: { username: 'test', password: 'test123' }
  *   },
+ *   options: { stages: [...] },
  *   aireport: {
- *     reportPath: "./ai_performance_report.html",
- *     AiUrl: "https://ai-analysis-api.com",
- *     apikey: "your-api-key"
- *   },
- *   detailedReportjson: "./performance_metrics.json"
- * };
- *
- * runK6Test(testConfig)
- *   .then(() => console.log('Performance test completed successfully!'))
- *   .catch(err => console.error('Error:', err));
- * ```
+ *     reportPath: 'report.html',
+ *     AiUrl: 'https://api.openai.com/v1/...',
+ *     apikey: 'sk-...'
+ *   }
+ * });
  */
+
 async function runPerformanceTest(params) {
-    const { url, options, aireport, detailedReportjson } = params;
+    try {
+        // Destructure with default values
+        const { 
+            request, 
+            options, 
+            aireport = null, 
+            detailedReportjson = null,
+            checks = '',
+            thinkTime = 1 
+        } = params;
 
-    if (!aireport || !aireport.reportPath || !aireport.AiUrl || !aireport.apikey) {
-        console.error('Missing required AI report parameters (reportPath, AiUrl, or apikey)');
-        return;
+        // Validate required parameters
+        if (!request || !request.url) {
+            throw new Error('Missing required request configuration');
+        }
+
+        // Validate AI config if provided
+        if (aireport) {
+            if (!aireport.reportPath || !aireport.AiUrl || !aireport.apikey) {
+                console.error('Invalid AI report configuration - missing required fields');
+                return;
+            }
+        }
+        let tempScriptPath, jsonReportPath;
+    
+        // Generate k6 script
+        const k6Script = generateK6Script(params);
+
+        // Create temporary files
+        tempScriptPath = path.join(__dirname, 'temp_k6_script.js');
+        jsonReportPath = path.join(__dirname, 'temp_report.json');
+        
+        fs.writeFileSync(tempScriptPath, k6Script);
+
+        // Execute k6 test
+        const result = spawnSync('k6', ['run', tempScriptPath, '--summary-export', jsonReportPath], { 
+            stdio: 'inherit' 
+        });
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        // Process results
+        const jsonData = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8'));
+
+        // Save detailed report if requested
+        if (detailedReportjson) {
+            fs.writeFileSync(detailedReportjson, JSON.stringify(jsonData, null, 2));
+            console.log(`Detailed JSON report saved: ${detailedReportjson}`);
+        }
+
+        // Generate AI report if configured
+        if (aireport) {
+            try {
+                const aiAnalysis = await getAIAnalysis(jsonData, aireport.AiUrl, aireport.apikey);
+                generateCustomHtmlReport(jsonData, aiAnalysis, aireport.reportPath);
+            } catch (error) {
+                console.error('AI report generation failed:', error.message);
+            }
+        }
+
+        return jsonData;
+    } catch (error) {
+        console.error('Performance test failed:', error.message);
+        throw error;
+    } finally {
+        // Cleanup temporary files
+        cleanupTempFiles();
     }
+}
 
-    const reportPath = aireport.reportPath;
-    const AiUrl = aireport.AiUrl;
-    const apiKey = aireport.apikey;
-
-    // Convert options object to a string representation
-    const optionsString = JSON.stringify(options, null, 4)
-        .replace(/"(\w+)":/g, '$1:') // Remove quotes around keys
-        .replace(/"/g, "'"); // Replace double quotes with single quotes
-
-    // Generate k6 script dynamically
-    const k6Script = `
+function generateK6Script(params) {
+    return `
         import http from 'k6/http';
+        ${params.request.binary ? "import { b64decode } from 'k6/encoding';" : ''}
         import { check, sleep } from 'k6';
 
-        export const options = ${optionsString};
+        export const options = ${JSON.stringify(params.options, null, 4)};
 
-        export default function () {
-            let res = http.get('${url}');
+        export default function() {
+            ${generateRequestCode(params.request)}
+            
             check(res, {
-                'status was 200': (r) => r.status === 200,
+                'status was 2xx': (r) => r.status >= 200 && r.status < 300,
+                ${params.checks}
             });
-            sleep(1);
+            
+            sleep(${params.thinkTime});
         }
     `.trim();
-
-    // Create a temporary script file
-    const tempScriptPath = path.join(__dirname, 'temp_k6_script.js');
-    fs.writeFileSync(tempScriptPath, k6Script);
-
-    // Prepare k6 command arguments
-    const jsonReportPath = path.resolve('temp_report.json');
-    const k6Args = ['run', tempScriptPath, '--summary-export', jsonReportPath];
-
-    // Run k6 test
-    const result = spawnSync('k6', k6Args, { stdio: 'inherit' });
-
-    // Cleanup temporary script
-    fs.unlinkSync(tempScriptPath);
-
-    if (result.error) {
-        console.error('Error running k6:', result.error);
-        return;
-    }
-
-    // Read k6 JSON report
-    const jsonData = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8'));
-
-    // Save detailed JSON report if needed
-    if (detailedReportjson) {
-        fs.writeFileSync(detailedReportjson, JSON.stringify(jsonData, null, 2));
-        console.log(`Detailed JSON report saved: ${detailedReportjson}`);
-    }
-
-    // Call AI API for analysis
-    try {
-        const aiAnalysis = await getAIAnalysis(jsonData, AiUrl, apiKey);
-        generateCustomHtmlReport(jsonData, aiAnalysis, reportPath);
-    } catch (error) {
-        console.error('Error during AI analysis:', error);
-    }
-
-    // Cleanup JSON report file
-    fs.unlinkSync(jsonReportPath);
 }
+
+function cleanupTempFiles() {
+    const tempFiles = [
+        path.join(__dirname, 'temp_k6_script.js'),
+        path.join(__dirname, 'temp_report.json')
+    ];
+    
+    tempFiles.forEach(file => {
+        try {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+                console.log(`Cleaned up temp file: ${file}`);
+            }
+        } catch (error) {
+            console.error(`Error deleting temp file ${file}:`, error.message);
+        }
+    });
+}
+function generateRequestCode(request) {
+    // Determine payload and content type
+    let payloadCode = 'null';
+    let contentType = request.headers?.['Content-Type'];
+    
+    if (request.body) {
+        payloadCode = `JSON.stringify(${JSON.stringify(request.body)})`;
+        contentType = contentType || 'application/json';
+    } else if (request.json) {
+        payloadCode = `'${request.json.replace(/'/g, "\\'")}'`;
+        contentType = contentType || 'application/json';
+    } else if (request.formData) {
+        payloadCode = `'${new URLSearchParams(request.formData).toString()}'`;
+        contentType = contentType || 'application/x-www-form-urlencoded';
+    } else if (request.binary) {
+        payloadCode = `b64decode('${request.binary.toString('base64')}')`;
+        contentType = contentType || 'application/octet-stream';
+    }
+
+    // Build headers
+    const headers = {
+        ...(contentType ? { 'Content-Type': contentType } : {}),
+        ...(request.headers || {})
+    };
+
+    return `
+        let res = http.${request.method?.toLowerCase() || 'get'}(
+            '${request.url}',
+            ${payloadCode},
+            {
+                headers: ${JSON.stringify(headers)},
+                ${request.params ? `params: ${JSON.stringify(request.params)},` : ''}
+                ${request.cookies ? `cookies: ${JSON.stringify(request.cookies)},` : ''}
+                ${request.timeout ? `timeout: '${request.timeout}'` : ''}
+            }
+        );`;
+}
+
+
 
 /**
  * Analyzes the k6 performance data using an AI API.
