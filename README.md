@@ -71,25 +71,32 @@ Example: Create new `testFile.ts`file and copy paste the below example code ,
 replace your `reportPath`, `AiUrl` and `apikey` with correct values .
 
 ```javascript
-import { runK6Test } from 'nilgiriperformance';
+const { runPerformanceTest } = require('performancenilgiri');
 
-const testConfig = {
-  url: "https://example.com",
-  options: {
-    vus: 10,
-    duration: "30s"
-  },
-  aireport: {
-    reportPath: "./performance_report.html",
-    AiUrl: "https://ai-analysis-api.com",
-    apikey: "your-api-key"
-  },
-  detailedReportjson: "./performance_metrics.json"
-};
+runPerformanceTest({
+    request: {
+        method: 'POST',
+        url: 'https://jsonplaceholder.typicode.com/posts',
+        body: {
+          title: 'foo',
+          body: 'bar',
+          userId: 1
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      },
+    options: { vus: 10, duration: '5s' },
+    aireport: {
+        reportPath: "./performance_report.html",
+       AiUrl: "https://ai-analysis-api.com",
+       apikey: "your-api-key"
+      },
+      detailedReportjson: "./performance_metrics.json"
+    
+  });
 
-runK6Test(testConfig)
-  .then(() => console.log('Performance test completed successfully!'))
-  .catch(err => console.error('Error:', err));
+
 ```
 
 ---
