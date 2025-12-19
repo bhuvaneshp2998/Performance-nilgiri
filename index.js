@@ -28,7 +28,7 @@ const copyTemplateFiles = (templatePath, destinationPath) => {
 };
 
 const generateProject = () => {
-  const projectName = process.argv[2] || 'nilgiriperformance';
+  const projectName = process.argv[2] || 'testperformance';
   const projectPath = path.join(process.cwd(), projectName);
 
   if (fs.existsSync(projectPath)) {
