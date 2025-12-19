@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.monitoring
+
+# Test reports and coverage
+reports/
+coverage/
+*.html
+*.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.atom/
+
+# Build outputs
+dist/
+build/
+temp/
+tmp/
+
+# Performance testing
+k6-results/
+jmeter-results/
+*.jmx.bak
+
+# Docker
+.dockerignore
+
+# Cache
+.cache/
+.eslintcache
+
+# Misc
+.history/
+.env.example
+.npmrc
